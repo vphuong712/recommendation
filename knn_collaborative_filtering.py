@@ -74,13 +74,15 @@ class CF(object):
     def fit(self):
         self.refresh()
 
-    def __pred(self, u, i, normalized=1):
+    def predict(self, u, i, normalized=1):
         """
         Dự đoán ra ratings của các users với mỗi items.
         """
         # tìm tất cả user đã rate item i
         ids = np.where(self.Y_data[:, 1] == i)[0].astype(np.int32)
+        # print(ids)
         users_rated_i = (self.Y_data[ids, 0]).astype(np.int32)
+        # print(users_rated_i)
         sim = self.S[u, users_rated_i]
         a = np.argsort(sim)[-self.k:]
         nearest_s = sim[a]
@@ -90,13 +92,23 @@ class CF(object):
             return (r * nearest_s)[0] / (np.abs(nearest_s).sum() + 1e-8)
 
         return (r * nearest_s)[0] / (np.abs(nearest_s).sum() + 1e-8) + self.mu[u]
+    
+    def get_prediction_matrix(self):
+        """
+        Tính toán và trả về ma trận dự đoán (user-item matrix)
+        """
+        prediction_matrix = np.zeros((self.n_users, self.n_items))
+        for u in range(self.n_users):
+            for i in range(self.n_items):
+                prediction_matrix[u, i] = self.predict(u, i, normalized=0)
+        return prediction_matrix
 
     def pred(self, u, i, normalized=1):
         """
         Xét xem phương pháp cần áp dùng là uuCF hay iiCF
         """
         if self.uuCF: return self.__pred(u, i, normalized)
-        return self.__pred(i, u, normalized)
+        return self.predict(i, u, normalized)
 
     def print_list_item(self):
         for i in range(self.n_items):
@@ -110,11 +122,12 @@ class CF(object):
         have not been rated by u yet.
         """
         ids = np.where(self.Y_data[:, 0] == u)[0]
-        items_rated_by_u = self.Y_data[ids, 1].tolist()
+        items_rated_by_u = list(set(self.Y_data[ids, 1].tolist()))  # Loại bỏ trùng lặp
         recommended_items = []
         for i in range(self.n_items):
             if i not in items_rated_by_u:
-                rating = self.__pred(u, i)
+                rating = self.predict(u, i)
+                # print(rating)
                 if rating > 0:
                     recommended_items.append(i)
 
@@ -136,14 +149,13 @@ class CF(object):
 
         for i in range(self.n_items):
             if i not in items_rated_by_u:
-                rating = self.__pred(u, i)
+                rating = self.predict(u, i)
                 item['id'] = i
                 item['similar'] = rating
                 list_items.append(item.copy())
 
         sorted_items = sorted(list_items, key=take_similar, reverse=True)
-        sorted_items.pop(top_x)
-        return sorted_items
+        return sorted_items[:top_x]
 
     def print_recommendation(self):
         """
@@ -152,12 +164,14 @@ class CF(object):
         print('Recommendation: ')
         for u in range(self.n_users):
             recommended_items = self.recommend(u)
-            if self.uuCF:
-                print('Recommend item(s):', recommended_items, 'for user', u)
-            else:
-                print('Recommend item', u, 'for user(s) : ', recommended_items)
+            if len(recommended_items) > 0:
+                if self.uuCF:
+                    print('Recommend item(s):', recommended_items, 'for user', u)
+                else:
+                    print('Recommend item', u, 'for user(s) : ', recommended_items)
 
 rates[:, 1] -= 1  
+
 
 def test_1():
     rs = CF(rates, k = 10, uuCF = 0)
@@ -174,6 +188,26 @@ def test_2():
     RMSE = np.sqrt(SE/rates)
     print ('Item-item CF, RMSE =', RMSE)
     
+def test_3():
+    rs = CF(rates, k=10, uuCF=1)
+    rs.fit()
+    # prediction_matrix = rs.get_prediction_matrix()
+    # print("Prediction Matrix:")
+    # pd.DataFrame(prediction_matrix).to_csv("prediction_matrix.csv", index=False)
+    for i in range(rs.n_users):
+        u = i
+        top_x = 10
+        recommended_items = rs.recommend_top(u, top_x)
+        print(f"Top {top_x} recommendations for user {u}: {[item['id'] for item in recommended_items]}")
+    return    
+    for n in range(rates):
+        pred = rs.pred(rate_test[n, 0], rate_test[n, 1], normalized = 0)
+        SE += (pred - rate_test[n, 2])**2 
+    RMSE = np.sqrt(SE/rates)
+    print ('Item-item CF, RMSE =', RMSE)
+    
+
 # test_1()
 test_2()   
+# test_3()
 

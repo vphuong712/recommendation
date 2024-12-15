@@ -25,7 +25,8 @@ def get_items_rated_by_user(rate_matrix, user_id):
     
     return (item_ids, scores)
 
-print(get_items_rated_by_user(rate_train, 900))
+# print(get_items_rated_by_user(rate_train, 900))
+
 
 
 class Contentbased:
@@ -90,7 +91,7 @@ def test():
     cb.fit()
     print(cb.RMSE(rates))
     rcm_list =  list(cb.recommend(99, 10))
-    rcm_movie = items[items['product_id'].isin(rcm_list)]['product_name']
-    print(rcm_movie)
+    rcm_prod = items[items['product_id'].isin(rcm_list)]['product_name']
+    print(rcm_prod)
     
 test()         
