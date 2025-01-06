@@ -189,11 +189,9 @@ def test_2():
     print ('Item-item CF, RMSE =', RMSE)
     
 def test_specific_user(user_id):
-    """
-    Hàm test_2 chỉ recommend cho một user_id cụ thể.
-    """
-    rs = CF(rates, k=10, uuCF=1)  # Sử dụng User-User CF
-    rs.fit()  # Chuẩn hóa dữ liệu và tính toán similarity
+
+    rs = CF(rates, k=10, uuCF=1)  
+    rs.fit()  
 
     # Gợi ý các mục cho user_id
     recommended_items = rs.recommend(user_id)
