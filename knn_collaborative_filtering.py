@@ -188,26 +188,21 @@ def test_2():
     RMSE = np.sqrt(SE/rates)
     print ('Item-item CF, RMSE =', RMSE)
     
-def test_3():
-    rs = CF(rates, k=10, uuCF=1)
-    rs.fit()
-    # prediction_matrix = rs.get_prediction_matrix()
-    # print("Prediction Matrix:")
-    # pd.DataFrame(prediction_matrix).to_csv("prediction_matrix.csv", index=False)
-    for i in range(rs.n_users):
-        u = i
-        top_x = 10
-        recommended_items = rs.recommend_top(u, top_x)
-        print(f"Top {top_x} recommendations for user {u}: {[item['id'] for item in recommended_items]}")
-    return    
-    for n in range(rates):
-        pred = rs.pred(rate_test[n, 0], rate_test[n, 1], normalized = 0)
-        SE += (pred - rate_test[n, 2])**2 
-    RMSE = np.sqrt(SE/rates)
-    print ('Item-item CF, RMSE =', RMSE)
-    
+def test_specific_user(user_id):
+    """
+    Hàm test_2 chỉ recommend cho một user_id cụ thể.
+    """
+    rs = CF(rates, k=10, uuCF=1)  # Sử dụng User-User CF
+    rs.fit()  # Chuẩn hóa dữ liệu và tính toán similarity
+
+    # Gợi ý các mục cho user_id
+    recommended_items = rs.recommend(user_id)
+    if recommended_items:
+        print(f"Recommend item(s) for user {user_id}: {recommended_items}")
+    else:
+        print(f"No recommendations available for user {user_id}.")
 
 # test_1()
-test_2()   
-# test_3()
+# test_2()   
+test_specific_user(337)
 
